@@ -9,20 +9,21 @@ services:
       - ./.env
   
   backend:
-    image: pupersa23/foodgram:latest
+    image: pupersa23/foodgram_backend:latest
     restart: always
     volumes:
-      - static_value:/code/static/
+      - static_value:/code/static_backend/
       - media_value:/code/media/
     depends_on:
       - db
     env_file:
       - ./.env
-
   frontend:
-    image: pupersa23/foodgram_frontend:v1
+    image: pupersa23/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
+    depends_on:
+      - backend
 
   nginx:
     image: nginx:1.19.3
