@@ -85,7 +85,7 @@ jobs:
             sudo docker pull pupersa23/foodgram_backend:latest
             sudo docker pull pupersa23/foodgram_frontend:latest
             sudo docker-compose stop
-            sudo docker-compose rm backend
+            sudo docker system prune -af
             touch .env 
             echo SECRET_KEY=${{ secrets.SECRET_KEY }} > .env
             echo DEBUG=${{ secrets.DEBUG }} > .env
@@ -97,9 +97,6 @@ jobs:
             echo DB_HOST=${{ secrets.DB_HOST }} >> .env
             echo DB_PORT=${{ secrets.DB_PORT }} >> .env
             sudo docker-compose up -d
-            sudo docker-compose exec backend python manage.py makemigrations
-            sudo docker-compose exec backend python manage.py migrate
-            sudo docker-compose exec backend python manage.py collectstatic
   
   send_message:
     if: github.ref == 'refs/heads/master'
