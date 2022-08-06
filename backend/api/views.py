@@ -1,4 +1,6 @@
 from django.http import HttpResponse
+from django.db.models import Sum
+from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
@@ -8,13 +10,15 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from api.filters import IngredientSearchFilter, RecipeFilter
-from api.models import (Favorite, Ingredient, IngredientQuantity, Recipe,
+from api.models import (Favorite, Ingredient, Recipe,
                         ShoppingCart, Tag)
 from api.pagination import CustomPageNumberPagination
 from api.permissions import IsAuthorOrReadOnly
 from api.serializers import (FavoriteSerializer, IngredientSerializer,
                              RecipeListSerializer, RecipeWriteSerializer,
                              ShoppingCartSerializer, TagSerializer)
+
+User = get_user_model()
 
 
 class TagsViewSet(ReadOnlyModelViewSet):
@@ -43,58 +47,82 @@ class RecipeViewSet(ModelViewSet):
             return RecipeListSerializer
         return RecipeWriteSerializer
 
-    @action(detail=True, permission_classes=[IsAuthenticated])
+    @action(
+        detail=True,
+        methods=['GET', 'DELETE'],
+        permission_classes=[IsAuthenticated],
+    )
     def favorite(self, request, pk):
-        data = {'user': request.user.id, 'recipe': pk}
-        serializer = FavoriteSerializer(
-            data=data, context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    @favorite.mapping.delete
-    def delete_favorite(self, request, pk):
+        recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
-        recipe = get_object_or_404(Recipe, id=pk)
-        favorite = get_object_or_404(
-            Favorite, user=user, recipe=recipe
-        )
-        favorite.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        if request.method == 'GET':
+            favorite_recipe, created = Favorite.objects.get_or_create(
+                user=user, recipe=recipe
+            )
+            if created is True:
+                serializer = FavoriteSerializer()
+                return Response(
+                    serializer.to_representation(instance=favorite_recipe),
+                    status=status.HTTP_201_CREATED
+                )
+        if request.method == 'DELETE':
+            Favorite.objects.filter(
+                user=user,
+                recipe=recipe
+            ).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, permission_classes=[IsAuthenticated])
+    @action(
+        detail=True,
+        methods=['GET', 'DELETE'],
+        permission_classes=[IsAuthenticated]
+    )
     def shopping_cart(self, request, pk):
-        data = {'user': request.user.id, 'recipe': pk}
-        serializer = ShoppingCartSerializer(
-            data=data, context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    @shopping_cart.mapping.delete
-    def delete_shopping_cart(self, request, pk):
+        recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
-        recipe = get_object_or_404(Recipe, id=pk)
-        shopping_cart = get_object_or_404(
-            ShoppingCart, user=user, recipe=recipe
-        )
-        shopping_cart.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        if request.method == 'GET':
+            recipe, created = ShoppingCart.objects.get_or_create(
+                user=user, recipe=recipe
+            )
+            if created is True:
+                serializer = ShoppingCartSerializer()
+                return Response(
+                    serializer.to_representation(instance=recipe),
+                    status=status.HTTP_201_CREATED
+                )
+            return Response(
+                {'errors': 'Рецепт уже в корзине покупок'},
+                status=status.HTTP_201_CREATED
+            )
+        if request.method == 'DELETE':
+            ShoppingCart.objects.filter(
+                user=user, recipe=recipe
+            ).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        ingredients = IngredientQuantity.objects.filter(
-            recipe__shopping_carts__user=request.user).values(
-            'ingredient__name', 'ingredient__measurement_unit', 'amount'
+        user = request.user
+        recipes = Recipe.objects.filter(
+            in_favourites__user=user,
+            in_favourites__is_in_shopping_cart=True
         )
-        shopping_cart = '\n'.join([
-            f'{ingredient["ingredient__name"]} - {ingredient["amount"]} '
-            f'{ingredient["ingredient__measurement_unit"]}'
-            for ingredient in ingredients
-        ])
-        filename = 'shopping_cart.txt'
-        response = HttpResponse(shopping_cart, content_type='text/plain')
-        response['Content-Disposition'] = f'attachment; filename={filename}'
-        return response
+        ingredients = recipes.values(
+            'ingredients__name',
+            'ingredients__measurement_unit__name').order_by(
+            'ingredients__name').annotate(
+            ingredients_total=Sum('ingredient_amounts__amount')
+        )
+        shopping_list = {}
+        for item in ingredients:
+            title = item.get('ingredients__name')
+            count = str(item.get('ingredients_total')) + ' ' + item[
+                'ingredients__measurement_unit__name'
+            ]
+            shopping_list[title] = count
+        data = ''
+        for key, value in shopping_list.items():
+            data += f'{key} - {value}\n'
+        return HttpResponse(data, content_type='text/plain')
