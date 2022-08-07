@@ -46,7 +46,6 @@ class RecipeViewSet(ModelViewSet):
             return RecipeListSerializer
         return RecipeWriteSerializer
 
-    @staticmethod
     def my_object(serializer_class, model_class, request, pk):
         if request.method == 'GET':
             data = {'user': request.user.id, 'recipe': pk}
