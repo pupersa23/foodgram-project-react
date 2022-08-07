@@ -3,7 +3,6 @@ import csv
 from django.conf import settings
 from django.core.management import BaseCommand
 
-
 from api.models import Ingredient
 
 
