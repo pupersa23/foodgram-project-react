@@ -46,7 +46,7 @@ class RecipeViewSet(ModelViewSet):
             return RecipeListSerializer
         return RecipeWriteSerializer
 
-    def my_object(serializer_class, model_class, request, pk):
+    def my_object(self, serializer_class, model_class, request, pk):
         if request.method == 'GET':
             data = {'user': request.user.id, 'recipe': pk}
             serializer = serializer_class(
