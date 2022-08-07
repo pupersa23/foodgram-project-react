@@ -127,10 +127,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def create_ingredients(self, ingredients, recipe):
         for ingredient in ingredients:
+            ingredient_id = ingredient['id']
+            amount = ingredient['amount']
             IngredientQuantity.objects.create(
-                recipe=recipe,
-                ingredient_id=ingredient.get('id'),
-                amount=ingredient.get('amount'), )
+                recipe=recipe, ingredient=ingredient_id, amount=amount
+            )
 
     def create_tags(self, tags, recipe):
         for tag in tags:
