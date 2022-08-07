@@ -20,5 +20,5 @@ class Command(BaseCommand):
             spamreader = csv.reader(file, delimiter=',')
             for row in spamreader:
                 Ingredient.objects.update_or_create(name=row[0],
-                                                    units=row[1])
+                                                    measurement_unit=row[1])
             self.stdout.write(self.style.SUCCESS('Все ингредиенты загружены.'))
