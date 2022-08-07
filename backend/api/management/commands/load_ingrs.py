@@ -3,7 +3,7 @@ import csv
 from django.conf import settings
 from django.core.management import BaseCommand
 
-from recipes.models import Ingredient
+from api.models import Ingredient
 
 
 class Command(BaseCommand):
