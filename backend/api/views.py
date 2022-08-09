@@ -83,8 +83,7 @@ class RecipeViewSet(ModelViewSet):
     def shopping_cart(self, request, pk):
         return self.seve_or_delete_favotite_shopping_cart(
             ShoppingCartSerializer,
-            ShoppingCart, request, pk
-            )
+            ShoppingCart, request, pk)
 
     @action(detail=False, permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
