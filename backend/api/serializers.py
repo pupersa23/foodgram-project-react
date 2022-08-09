@@ -41,7 +41,6 @@ class RecipeListSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     author = CustomUserSerializer(read_only=True)
     ingredients = IngredientQuantitySerializer(
-        source='ingredientamount_set',
         many=True,
         read_only=True,
     )
