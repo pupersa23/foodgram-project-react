@@ -1,5 +1,6 @@
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
 from api.models import (Favorite, Ingredient, IngredientQuantity, Recipe,
                         ShoppingCart, Tag)
@@ -9,13 +10,13 @@ from users.serializers import CustomUserSerializer
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = ('id', 'name', 'color', 'slug')
+        fields = '__all__'
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = ('id', 'name', 'measurement_unit')
+        fields = '__all__'
 
 
 class IngredientQuantitySerializer(serializers.ModelSerializer):
@@ -28,6 +29,12 @@ class IngredientQuantitySerializer(serializers.ModelSerializer):
     class Meta:
         model = IngredientQuantity
         fields = ('id', 'name', 'measurement_unit', 'amount')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=IngredientQuantity.objects.all(),
+                fields=['ingredient', 'recipe']
+            )
+        ]
 
 
 class RecipeListSerializer(serializers.ModelSerializer):
