@@ -1,3 +1,4 @@
+from django.core import validators
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -25,17 +26,19 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
-    name = models.CharField(
-        max_length=100, unique=True, verbose_name='Название ингредиента'
-    )
-    measurement_unit = models.CharField(
-        max_length=100, verbose_name='Единица измерения'
-    )
+    name = models.CharField(max_length=200,
+                            verbose_name='Название ингредиента')
+    measurement_unit = models.CharField(max_length=200,
+                                        verbose_name='Единица измерения')
 
     class Meta:
         ordering = ['-id']
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        constraints = [
+            models.UniqueConstraint(fields=['name', 'measurement_unit'],
+                                    name='unique ingredient')
+        ]
 
     def __str__(self):
         return self.name
@@ -77,28 +80,30 @@ class Recipe(models.Model):
 
 class IngredientQuantity(models.Model):
     ingredient = models.ForeignKey(
-        Ingredient, on_delete=models.CASCADE, verbose_name='Ингредиент'
+        Ingredient,
+        on_delete=models.CASCADE,
+        verbose_name='Ингридиент',
     )
     recipe = models.ForeignKey(
-        Recipe, on_delete=models.CASCADE, verbose_name='Рецепт'
+        Recipe,
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт',
     )
     amount = models.PositiveSmallIntegerField(
+        validators=(
+            validators.MinValueValidator(
+                1, message='Минимальное количество ингридиентов 1'),),
         verbose_name='Количество',
-        validators=[
-            MinValueValidator(1, message='Количество должно быть больше 0!')
-        ]
     )
 
     class Meta:
         ordering = ['-id']
+        verbose_name = 'Количество ингридиента'
+        verbose_name_plural = 'Количество ингридиентов'
         constraints = [
-            models.UniqueConstraint(
-                fields=['ingredient', 'recipe'],
-                name='unique_ingredients_in_recipe'
-            )
+            models.UniqueConstraint(fields=['ingredient', 'recipe'],
+                                    name='unique ingredients recipe')
         ]
-        verbose_name = 'Количество ингредиента'
-        verbose_name_plural = 'Количество ингредиентов'
 
 
 class Favorite(models.Model):
