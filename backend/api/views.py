@@ -47,7 +47,7 @@ class RecipeViewSet(ModelViewSet):
         return RecipeWriteSerializer
 
     @staticmethod
-    def seve_or_delete_favotite_shopping_cart(serializer_class,
+    def save_or_delete_favotite_shopping_cart(serializer_class,
                                               model_class, request, pk):
         if request.method == 'GET':
             data = {'user': request.user.id, 'recipe': pk}
@@ -73,13 +73,13 @@ class RecipeViewSet(ModelViewSet):
     )
     @action(detail=True, permission_classes=[IsAuthenticated])
     def favorite(self, request, pk):
-        return self.seve_or_delete_favotite_shopping_cart(FavoriteSerializer,
+        return self.save_or_delete_favotite_shopping_cart(FavoriteSerializer,
                                                           Favorite, request,
                                                           pk)
 
     @action(detail=True, permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk):
-        return self.seve_or_delete_favotite_shopping_cart(
+        return self.save_or_delete_favotite_shopping_cart(
             ShoppingCartSerializer,
             ShoppingCart, request, pk)
 
