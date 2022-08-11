@@ -1,6 +1,7 @@
 asgiref==3.4.1
 Django==3.2.14
 django-filter==21.1
+django-extra-fields==3.0.2
 djangorestframework==3.12.4
 drf-base64==2.0
 fpdf==1.7.2
