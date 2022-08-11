@@ -1,22 +1,29 @@
-import json
+import csv
+
+from django.conf import settings
+from django.core.management import BaseCommand, CommandError
+
+from recipes.models import Ingredient
 
 
-def add_parametrs(ingredient, id):
-    return {
-        "model": "recipes.ingredient",
-        "pk": id,
-        "fields": ingredient
-    }
+class Command(BaseCommand):
+    help = 'Add csv files to Django Models.'
 
-
-def create_fixtures():
-    with open('ingredients.json', 'r') as f:
-        ingredients = json.loads(f.read())
-        for i in range(len(ingredients)):
-            ingredients[i] = add_parametrs(ingredients[i], i + 1)
-    with open('fixtures.json', 'w') as f:
-        f.write(json.dumps(ingredients))
-
-
-if __name__ == '__main__':
-    create_fixtures()
+    def handle(self, *args, **kwargs):
+        data_path = settings.BASE_DIR
+        try:
+            with open(
+                f'{ data_path }/data/ingredients.csv',
+                newline='',
+                encoding='utf-8'
+            ) as file:
+                spamreader = csv.reader(file, delimiter=',')
+                for row in spamreader:
+                    Ingredient.objects.update_or_create(name=row[0],
+                                                        units=row[1])
+                self.stdout.write(self.style.SUCCESS(
+                                  'Все ингредиенты загружены.'))
+        except FileNotFoundError:
+            raise CommandError("Не удалось открыть файл ingredients.csv.")
+        except Exception:
+            raise CommandError("Не удалось записать модель Ingredient.")
