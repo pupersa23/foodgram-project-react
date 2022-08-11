@@ -1,6 +1,6 @@
-from django.core.exceptions import ValidationError
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
+from django.shortcuts import get_object_or_404
 
 from recipes.models import Ingredient, IngredientAmount, Recipe, Tag
 from users.serializers import UserSerializer
@@ -67,32 +67,22 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         ingredients = data['ingredients']
-        existing_ingredients = {}
-        for ingredient in ingredients:
-            if ingredient['amount'] <= 0:
-                raise ValidationError(
-                    'Количество ингридиента должно быть больше нуля'
-                )
-            if (
-                instance := ingredient['ingredient']
-            ) not in existing_ingredients:
-                existing_ingredients[instance] = True
-            else:
-                raise ValidationError(
-                    'Ингридиенты не должны повторяться'
-                )
-        if data['cooking_time'] <= 0:
-            raise ValidationError(
-                'Время готовки должно быть больше нуля'
-            )
+        ingredient_list = []
+        for items in ingredients:
+            ingredient = get_object_or_404(
+                Ingredient, id=items['id'])
+            if ingredient in ingredient_list:
+                raise serializers.ValidationError(
+                    'Ингредиент должен быть уникальным!')
+            ingredient_list.append(ingredient)
         tags = data['tags']
-        existing_tags = {}
-        for tag in tags:
-            if tag in existing_tags:
-                raise ValidationError(
-                    'Посторяющиеся теги недопустимы'
-                )
-            existing_tags['tag'] = True
+        if not tags:
+            raise serializers.ValidationError(
+                'Нужен хотя бы один тэг для рецепта!')
+        for tag_name in tags:
+            if not Tag.objects.filter(name=tag_name).exists():
+                raise serializers.ValidationError(
+                    f'Тэга {tag_name} не существует!')
         return data
 
     @staticmethod
