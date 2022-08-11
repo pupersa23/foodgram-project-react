@@ -119,6 +119,3 @@ class Cart(models.Model):
 
     def __str__(self) -> str:
         return self.user.username
-
-    def create_cart(sender, instance, **kwargs):
-        Cart.objects.get_or_create(user=instance)
