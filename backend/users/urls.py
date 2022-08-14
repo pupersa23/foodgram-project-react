@@ -6,9 +6,8 @@ from .views import (ShoppingCartViewSet, TokenCreateWithCheckBlockStatusView,
                     UserSubscribeViewSet)
 
 router = DefaultRouter()
-router.register(r'users-subscribe', UserSubscribeViewSet, basename='subscribe')
-router.register(r'recipes-shoppingcart',
-                ShoppingCartViewSet, basename='shopping_cart')
+router.register(r'users', UserSubscribeViewSet, basename='users')
+router.register(r'recipes', ShoppingCartViewSet, basename='shopping_cart')
 
 app_name = 'users'
 
