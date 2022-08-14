@@ -4,7 +4,7 @@ from django.urls import include, path
 
 api = [
     path('', include('users.urls', namespace='users')),
-    path('', include('recipes.urls', namespace='recipes')),
+    path('', include('api.urls', namespace='recipes')),
 ]
 
 urlpatterns = [
