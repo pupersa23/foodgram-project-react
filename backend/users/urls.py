@@ -1,20 +1,27 @@
 from django.urls import include, path
+from djoser.views import TokenDestroyView
 from rest_framework.routers import DefaultRouter
 
-from .views import CustomAuthToken, DestroyTokenAPIView, UserViewSet
+from .views import (ShoppingCartViewSet, TokenCreateWithCheckBlockStatusView,
+                    UserSubscribeViewSet)
 
 router = DefaultRouter()
+router.register(r'users-subscribe', UserSubscribeViewSet, basename='subscribe')
+router.register(r'recipes-shoppingcart',
+                ShoppingCartViewSet, basename='shopping_cart')
 
-router.register('', UserViewSet, basename='users')
+app_name = 'users'
 
-
-auth_urlpatterns = [
-    path('login/', CustomAuthToken.as_view()),
-    path('logout/', DestroyTokenAPIView.as_view()),
+authorization = [
+    path(
+        'token/login/',
+        TokenCreateWithCheckBlockStatusView.as_view(),
+        name="login",
+    ),
+    path('token/logout/', TokenDestroyView.as_view(), name="logout"),
 ]
 
-
 urlpatterns = [
-    path('auth/token/', include(auth_urlpatterns)),
-    path('users/', include(router.urls))
+    path('auth/', include(authorization)),
+    path('', include(router.urls)),
 ]
