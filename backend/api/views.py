@@ -49,7 +49,7 @@ class RecipeViewSet(ModelViewSet):
     @staticmethod
     def save_or_delete_favotite_shopping_cart(serializer_class,
                                               model_class, request, pk):
-        if request.method == 'GET':
+        if request.method == 'POST':
             data = {'user': request.user.id, 'recipe': pk}
             serializer = serializer_class(
                 data=data, context={'request': request}
@@ -68,7 +68,7 @@ class RecipeViewSet(ModelViewSet):
 
     @action(
         detail=True,
-        methods=['GET', 'DELETE'],
+        methods=['POST', 'DELETE'],
         permission_classes=[IsAuthenticated],
     )
     @action(detail=True, permission_classes=[IsAuthenticated])
