@@ -42,14 +42,14 @@ class RecipeViewSet(ModelViewSet):
     pagination_class = CustomPageNumberPagination
 
     def get_serializer_class(self):
-        if self.action in ('list', 'retrieve'):
-            return RecipeListSerializer
-        return RecipeWriteSerializer
+        if self.request.method in ['PUT', 'POST', 'PATCH']:
+            return RecipeWriteSerializer
+        return RecipeListSerializer
 
     @staticmethod
     def save_or_delete_favotite_shopping_cart(serializer_class,
                                               model_class, request, pk):
-        if request.method == 'POST':
+        if request.method == 'GET':
             data = {'user': request.user.id, 'recipe': pk}
             serializer = serializer_class(
                 data=data, context={'request': request}
@@ -68,22 +68,29 @@ class RecipeViewSet(ModelViewSet):
 
     @action(
         detail=True,
-        methods=['POST', 'DELETE'],
+        methods=['GET', 'DELETE'],
         permission_classes=[IsAuthenticated],
     )
-    @action(detail=True, permission_classes=[IsAuthenticated])
     def favorite(self, request, pk):
         return self.save_or_delete_favotite_shopping_cart(FavoriteSerializer,
                                                           Favorite, request,
                                                           pk)
 
-    @action(detail=True, permission_classes=[IsAuthenticated])
+    @action(
+        detail=True,
+        methods=['GET', 'DELETE'],
+        permission_classes=[IsAuthenticated],
+    )
     def shopping_cart(self, request, pk):
         return self.save_or_delete_favotite_shopping_cart(
             ShoppingCartSerializer,
             ShoppingCart, request, pk)
 
-    @action(detail=False, permission_classes=[IsAuthenticated])
+    @action(
+        detail=True,
+        methods=['GET', 'DELETE'],
+        permission_classes=[IsAuthenticated],
+    )
     def download_shopping_cart(self, request):
         user = request.user
         recipes = Recipe.objects.filter(
