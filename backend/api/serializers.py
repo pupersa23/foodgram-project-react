@@ -160,8 +160,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             text=text,
             cooking_time=cooking_time,
         )
-        recipe = self.add_tags_and_ingredients(tags_data, ingredients, recipes)
-        return recipe
+        self.add_tags_and_ingredients(tags_data, ingredients, recipes)
 
     def update(self, instance, validated_data):
         if 'ingredients' in validated_data:
