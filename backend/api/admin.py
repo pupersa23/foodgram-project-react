@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from api.models import (Favorite, Ingredient, IngredientQuantity, Recipe,
-                        ShoppingCart, Tag)
+                        ShoppingCart, Tag, TagQuantity)
 
 
 @admin.register(Tag)
@@ -29,6 +29,11 @@ class RecipeAdmin(admin.ModelAdmin):
 @admin.register(IngredientQuantity)
 class IngredientQuantityAdmin(admin.ModelAdmin):
     list_display = ('id', 'ingredient', 'recipe', 'amount')
+
+
+@admin.register(TagQuantity)
+class TagQuantityAdmin(admin.ModelAdmin):
+    extra = 0
 
 
 @admin.register(Favorite)

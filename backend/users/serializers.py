@@ -1,6 +1,5 @@
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 
 from api.models import Recipe
 from users.models import Follow, User
@@ -13,50 +12,29 @@ class CustomUserCreateSerializer(UserCreateSerializer):
 
 
 class CustomUserSerializer(UserSerializer):
-    is_subscribed = serializers.SerializerMethodField(read_only=True)
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = (
             'id', 'email', 'username', 'first_name',
-            'last_name', 'is_subscribed'
+            'last_name', 'is_subscribed', 'password'
         )
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        if not request or request.user.is_anonymous:
+        if request.user.is_anonymous:
             return False
-        return Follow.objects.filter(user=request.user, following=obj).exists()
-
-
-class FollowSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Follow
-        fields = ('user', 'following')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Follow.objects.all(),
-                fields=('user', 'following'),
-                message=('Вы уже подписаны на данного пользователя!')
-            )
-        ]
-
-    def validate(self, data):
-        request = self.context.get('request')
-        if not request or request.user.is_anonymous:
+        if Follow.objects.filter(
+                user=request.user, following__id=obj.id).exists():
+            return True
+        else:
             return False
-        following = data['following']
-        if request.user == following:
-            raise serializers.ValidationError(
-                'Вы не можете подписаться на себя!'
-            )
-        return data
 
-    def to_representation(self, instance):
-        request = self.context.get('request')
-        context = {'request': request}
-        return FollowListSerializer(
-            instance.following, context=context).data
+    def to_representation(self, obj):
+        result = super(CustomUserSerializer, self).to_representation(obj)
+        result.pop('password', None)
+        return result
 
 
 class FollowRecipesSerializer(serializers.ModelSerializer):
@@ -65,10 +43,10 @@ class FollowRecipesSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class FollowListSerializer(serializers.ModelSerializer):
-    is_subscribed = serializers.SerializerMethodField(read_only=True)
-    recipes = serializers.SerializerMethodField(read_only=True)
-    recipes_count = serializers.SerializerMethodField(read_only=True)
+class FollowSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -77,22 +55,23 @@ class FollowListSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        if not request or request.user.is_anonymous:
+        if request.user.is_anonymous:
             return False
-        return Follow.objects.filter(user=request.user, following=obj).exists()
+        if Follow.objects.filter(
+                user=request.user, following__id=obj.id).exists():
+            return True
+        else:
+            return False
 
     def get_recipes(self, obj):
         request = self.context.get('request')
-        if not request or request.user.is_anonymous:
-            return False
-        context = {'request': request}
-        recipes_limit = request.query_params.get('recipes_limit')
-        if recipes_limit is not None:
-            recipes = obj.recipes.all()[:int(recipes_limit)]
+        if request.GET.get('recipes_limit'):
+            recipes_limit = int(request.GET.get('recipes_limit'))
+            queryset = Recipe.objects.filter(author__id=obj.id).order_by('id')[
+                :recipes_limit]
         else:
-            recipes = obj.recipes.all()
-        return FollowRecipesSerializer(
-            recipes, many=True, context=context).data
+            queryset = Recipe.objects.filter(author__id=obj.id).order_by('id')
+        return FollowRecipesSerializer(queryset, many=True).data
 
     def get_recipes_count(self, obj):
-        return obj.recipes.count()
+        return Recipe.objects.filter(author__id=obj.id).count()

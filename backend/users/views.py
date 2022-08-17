@@ -1,44 +1,40 @@
-from rest_framework import status
-from rest_framework.generics import ListAPIView, get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from http import HTTPStatus
+
+from django.shortcuts import get_list_or_404, get_object_or_404
+from djoser.views import UserViewSet
+from rest_framework import viewsets
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
-from api.pagination import CustomPageNumberPagination
+from api.permissions import IsAuthorOrReadOnly
 from users.models import Follow, User
-from users.serializers import FollowListSerializer, FollowSerializer
+from users.serializers import CustomUserCreateSerializer, FollowSerializer
 
 
-class FollowApiView(APIView):
-    permission_classes = [IsAuthenticated]
+class CreateUserView(UserViewSet):
+    serializer_class = CustomUserCreateSerializer
 
-    def get(self, request, id):
-        data = {'user': request.user.id, 'following': id}
-        serializer = FollowSerializer(data=data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def delete(self, request, id):
-        user = request.user
-        following = get_object_or_404(User, id=id)
-        follow = get_object_or_404(
-            Follow, user=user, following=following
-        )
-        follow.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    def get_queryset(self):
+        return User.objects.all()
 
 
-class FollowListAPIView(ListAPIView):
-    pagination_class = CustomPageNumberPagination
-    permission_classes = [IsAuthenticated]
+class SubscribeViewSet(viewsets.ModelViewSet):
+    serializer_class = FollowSerializer
+    permission_classes = [IsAuthorOrReadOnly]
 
-    def get(self, request):
-        user = request.user
-        queryset = User.objects.filter(following__user=user)
-        page = self.paginate_queryset(queryset)
-        serializer = FollowListSerializer(
-            page, many=True,
-            context={'request': request}
-        )
-        return self.get_paginated_response(serializer.data)
+    def get_queryset(self):
+        return get_list_or_404(User, following__user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        user_id = self.kwargs.get('users_id')
+        user = get_object_or_404(User, id=user_id)
+        Follow.objects.create(
+            user=request.user, following=user)
+        return Response(HTTPStatus.CREATED)
+
+    def delete(self, request, *args, **kwargs):
+        author_id = self.kwargs['users_id']
+        user_id = request.user.id
+        subscribe = get_object_or_404(
+            Follow, user__id=user_id, following__id=author_id)
+        subscribe.delete()
+        return Response(HTTPStatus.NO_CONTENT)

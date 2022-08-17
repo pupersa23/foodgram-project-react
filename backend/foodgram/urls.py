@@ -2,14 +2,9 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
-api = [
-    path('', include('users.urls', namespace='users')),
-    path('', include('api.urls', namespace='recipes')),
-]
-
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include(api)),
+    path('api/', include('api.urls')),
 ]
 
 if settings.DEBUG:
