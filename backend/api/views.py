@@ -59,7 +59,6 @@ class RecipeViewSet(ModelViewSet):
 
 
 class BaseFavoriteCartViewSet(ModelViewSet):
-    pagination_class = CustomPageNumberPagination
     permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
