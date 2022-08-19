@@ -6,6 +6,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 
 from api.permissions import IsAuthorOrReadOnly
+from api.pagination import CustomPageNumberPagination
 from users.models import Follow, User
 from users.serializers import CustomUserCreateSerializer, FollowSerializer
 
@@ -18,8 +19,9 @@ class CreateUserView(UserViewSet):
 
 
 class SubscribeViewSet(viewsets.ModelViewSet):
-    serializer_class = FollowSerializer
+    pagination_class = CustomPageNumberPagination
     permission_classes = [IsAuthorOrReadOnly]
+    serializer_class = FollowSerializer
 
     def get_queryset(self):
         return get_list_or_404(User, following__user=self.request.user)

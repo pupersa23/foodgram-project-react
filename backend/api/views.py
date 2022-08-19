@@ -79,7 +79,6 @@ class BaseFavoriteCartViewSet(ModelViewSet):
 
 class CartViewSet(BaseFavoriteCartViewSet):
     serializer_class = ShoppingCartSerializer
-    pagination_class = CustomPageNumberPagination
     queryset = ShoppingCart.objects.all()
     model = ShoppingCart
 

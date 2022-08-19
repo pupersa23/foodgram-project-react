@@ -2,7 +2,7 @@ from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
 from api.models import (Favorite, Ingredient, IngredientQuantity, Recipe,
-                        ShoppingCart, Tag)
+                        ShoppingCart, Tag, TagQuantity)
 from users.serializers import CustomUserSerializer
 
 
@@ -164,14 +164,15 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return recipes
 
     def update(self, instance, validated_data):
-        if 'ingredients' in validated_data:
-            ingredients = validated_data.pop('ingredients')
-            instance.ingredients.clear()
-            self.create_ingredients(ingredients, instance)
-        if 'tags' in validated_data:
-            instance.tags.set(
-                validated_data.pop('tags'))
-        return super().update(instance, validated_data)
+        tags_data = validated_data.pop('tags')
+        ingredients = validated_data.pop('ingredientrecipes')
+        TagQuantity.objects.filter(recipe=instance).delete()
+        IngredientQuantity.objects.filter(recipe=instance).delete()
+        instance = self.add_tags_and_ingredients(
+            tags_data, ingredients, instance)
+        super().update(instance, validated_data)
+        instance.save()
+        return instance
 
     def get_is_favorited(self, obj):
         request = self.context.get('request')
