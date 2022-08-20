@@ -29,6 +29,7 @@ User = get_user_model()
 class TagsViewSet(ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     permission_classes = (AllowAny,)
+    pagination_class = None
     serializer_class = TagSerializer
 
 

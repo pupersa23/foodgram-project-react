@@ -65,17 +65,13 @@ class FollowRecipesSerializer(serializers.ModelSerializer):
 
 
 class FollowSerializer(serializers.ModelSerializer):
-    recipes = FollowRecipesSerializer(many=True)
+    recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
-    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
                   'is_subscribed', 'recipes', 'recipes_count')
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()
 
     def get_recipes(self, obj):
         request = self.context.get('request')
@@ -85,12 +81,5 @@ class FollowSerializer(serializers.ModelSerializer):
             recipes = recipes[:int(limit)]
         return FollowRecipesSerializer(recipes, many=True).data
 
-    def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        if request.user.is_anonymous:
-            return False
-        if Follow.objects.filter(
-                user=request.user, following__id=obj.id).exists():
-            return True
-        else:
-            return False
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()

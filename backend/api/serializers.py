@@ -134,20 +134,21 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return value
 
     def add_tags_and_ingredients(self, tags, ingredients, recipe):
-        for tag in tags:
-            recipe.tags.add(tag)
-        objs = [
+        for tag_data in tags:
+            recipe.tags.add(tag_data)
+            recipe.save()
+        ingred = [
             IngredientQuantity(ingredient_id=ingredient['ingredient']['id'],
                                amount=ingredient['amount'],
                                recipe=recipe)
             for ingredient in ingredients
         ]
-        IngredientQuantity.objects.bulk_create(objs)
+        IngredientQuantity.objects.bulk_create(ingred)
         return recipe
 
     def create(self, validated_data):
         author = validated_data.get('author')
-        tags_data = validated_data.pop('tags')
+        tags = validated_data.pop('tags')
         name = validated_data.get('name')
         image = validated_data.get('image')
         text = validated_data.get('text')
@@ -160,16 +161,16 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             text=text,
             cooking_time=cooking_time,
         )
-        self.add_tags_and_ingredients(tags_data, ingredients, recipes)
+        self.add_tags_and_ingredients(tags, ingredients, recipes)
         return recipes
 
     def update(self, instance, validated_data):
-        tags_data = validated_data.pop('tags')
+        tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredientrecipes')
         TagQuantity.objects.filter(recipe=instance).delete()
         IngredientQuantity.objects.filter(recipe=instance).delete()
         instance = self.add_tags_and_ingredients(
-            tags_data, ingredients, instance)
+            tags, ingredients, instance)
         super().update(instance, validated_data)
         instance.save()
         return instance

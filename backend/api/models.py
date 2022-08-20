@@ -57,7 +57,10 @@ class Recipe(models.Model):
         verbose_name='Ингредиенты'
     )
     tags = models.ManyToManyField(
-        Tag, verbose_name='Теги'
+        Tag,
+        through='TagQuantity',
+        verbose_name='Теги',
+        related_name='recipes',
     )
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name='Время приготовления (в минутах)',
@@ -120,11 +123,13 @@ class TagQuantity(models.Model):
     tag = models.ForeignKey(
         Tag,
         on_delete=models.CASCADE,
+        related_name='tagrecipes',
         verbose_name='Теги',
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
+        related_name='tagrecipes',
         verbose_name='Рецепт',
     )
 
