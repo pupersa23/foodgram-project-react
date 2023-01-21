@@ -1,3 +1,9 @@
+#Foodgram
+
+Cервис для публикаций и обмена рецептами.
+
+Авторизованные пользователи могут подписываться на понравившихся авторов, добавлять рецепты в избранное, в покупки, скачивать список покупок. Неавторизованным пользователям доступна регистрация, авторизация, просмотр рецептов других пользователей.
+
 ## Технологический стек
 [![Django-app workflow](https://github.com/pupersa23/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg)](https://github.com/pupersa23/foodgram-project-react/actions/workflows/foodgram_workflow.yml)
 [![Python](https://img.shields.io/badge/-Python-464646?style=flat&logo=Python&logoColor=56C0C0&color=008080)](https://www.python.org/)
